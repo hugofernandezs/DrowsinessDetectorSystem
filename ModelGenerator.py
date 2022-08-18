@@ -31,5 +31,3 @@ def create_datasets(dir: str) -> tuple[tf.data.Dataset, tf.data.Dataset]:
   trainingDataset = trainingDataset.cache().shuffle(1000).prefetch(buffer_size=tf.data.AUTOTUNE)
   validationDataset = validationDataset.cache().shuffle(1000).prefetch(buffer_size=tf.data.AUTOTUNE)
   return trainingDataset, validationDataset
-
-a, b = create_datasets(DATASET_TRAIN_DIR)
