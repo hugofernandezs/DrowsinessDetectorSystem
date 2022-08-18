@@ -1,0 +1,4 @@
+# Python packages required for launching the application.
+numpy
+streamlit
+tensorflow
