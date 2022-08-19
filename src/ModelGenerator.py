@@ -3,6 +3,7 @@ import contextlib
 import tensorflow as tf
 
 # Some constants.
+COLOR_MODE: str = "rgb"
 IMAGE_SIZE: int = 224
 BATCH_SIZE: int = 32
 EPOCHS: int = 10
@@ -15,19 +16,21 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 def create_datasets(dir: str) -> tuple[tf.data.Dataset, tf.data.Dataset]:
     trainingDataset: tf.data.Dataset = tf.keras.preprocessing.image_dataset_from_directory(
         dir,
-        validation_split=0.2,
-        subset="training",
-        seed=123,
+        color_mode=COLOR_MODE,
+        batch_size=BATCH_SIZE,
         image_size=(IMAGE_SIZE, IMAGE_SIZE),
-        batch_size=BATCH_SIZE
+        seed=0,
+        validation_split=0.2,
+        subset="training"
     )
     validationDataset: tf.data.Dataset = tf.keras.preprocessing.image_dataset_from_directory(
         dir,
-        validation_split=0.2,
-        subset="validation",
-        seed=123,
-        image_size=(IMAGE_SIZE, IMAGE_SIZE),
+        color_mode=COLOR_MODE,
         batch_size=BATCH_SIZE,
+        image_size=(IMAGE_SIZE, IMAGE_SIZE),
+        seed=0,
+        validation_split=0.2,
+        subset="validation"
     )
     trainingDataset: tf.data.Dataset = trainingDataset.cache().shuffle(1000).prefetch(buffer_size=tf.data.AUTOTUNE)
     validationDataset: tf.data.Dataset = validationDataset.cache().shuffle(1000).prefetch(buffer_size=tf.data.AUTOTUNE)
