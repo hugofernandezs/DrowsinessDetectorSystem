@@ -4,7 +4,7 @@ import tensorflow as tf
 
 # Some constants.
 COLOR_MODE: str = "rgb"
-IMAGE_SIZE: int = 224
+IMAGE_SIZE: int = 256
 BATCH_SIZE: int = 32
 EPOCHS: int = 10
 
