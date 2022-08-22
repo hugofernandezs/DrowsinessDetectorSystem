@@ -5,8 +5,9 @@ import numpy as np
 import tensorflow as tf
 
 # Some constants.
-COLOR_MODE: str = "rgb"
-IMAGE_SIZE: int = 256
+TARGET_SIZE: tuple[int, int] = (24, 24)
+COLOR_MODE: str = "grayscale"
+IMAGE_SIZE: int = 24
 BATCH_SIZE: int = 32
 
 # Remove Tensorflow annoying messages.
@@ -37,6 +38,10 @@ def create_datasets(dir: str) -> tuple[tf.data.Dataset, tf.data.Dataset]:
     validationDataset: tf.data.Dataset = validationDataset.cache().shuffle(1000).prefetch(buffer_size=tf.data.AUTOTUNE)
     return trainingDataset, validationDataset
 
+def generator(dir, gen=tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255), shuffle=True,batch_size=1,target_size=(24,24),class_mode='categorical' ):
+
+    return gen.flow_from_directory(dir,batch_size=batch_size,shuffle=shuffle,color_mode='grayscale',class_mode=class_mode,target_size=target_size)
+
 
 # Creates and fits a convolutional neural network.
 def create_model(dir: str, accuracy: int = 0.95, activation: str = "relu", optimizer: str = "adam",
@@ -57,28 +62,32 @@ def create_model(dir: str, accuracy: int = 0.95, activation: str = "relu", optim
                 self.model.stop_training = True
     # Creates the model.
     model: tf.keras.models.Sequential = tf.keras.models.Sequential([
-        tf.keras.layers.Resizing(IMAGE_SIZE, IMAGE_SIZE),
-        tf.keras.layers.Rescaling(1./255, input_shape=(IMAGE_SIZE, IMAGE_SIZE, 3)),
-        tf.keras.layers.Conv2D(16, 3, padding='same', input_shape=(BATCH_SIZE, IMAGE_SIZE, IMAGE_SIZE, 3), activation=activation),
-        tf.keras.layers.MaxPooling2D(),
-        tf.keras.layers.Conv2D(32, 3, padding='same', input_shape=(BATCH_SIZE, IMAGE_SIZE, IMAGE_SIZE, 3), activation=activation),
-        tf.keras.layers.MaxPooling2D(),
-        tf.keras.layers.Conv2D(64, 3, padding='same', input_shape=(BATCH_SIZE, IMAGE_SIZE, IMAGE_SIZE, 3), activation=activation),
-        tf.keras.layers.MaxPooling2D(),
+        tf.keras.layers.Conv2D(filters=32, kernel_size=(3, 3), input_shape=(IMAGE_SIZE, IMAGE_SIZE, 1), activation="relu"),
+        tf.keras.layers.MaxPooling2D(pool_size=(1, 1)),
+        tf.keras.layers.Conv2D(filters=32, kernel_size=(3, 3), activation="relu"),
+        tf.keras.layers.MaxPooling2D(pool_size=(1, 1)),
+        tf.keras.layers.Conv2D(filters=64, kernel_size=(3, 3), activation="relu"),
+        tf.keras.layers.MaxPooling2D(pool_size=(1, 1)),
+        tf.keras.layers.Dropout(rate=0.5),
         tf.keras.layers.Flatten(),
-        tf.keras.layers.Dense(128, activation=activation),
-        tf.keras.layers.Dense(2)
+        tf.keras.layers.Dense(units=128, activation="relu"),
+        tf.keras.layers.Dropout(rate=0.5),
+        # Usamos la activación sigmoid porque es la más correcta para salidas binarias.
+        tf.keras.layers.Dense(units=2, activation="softmax")
     ])
     model.compile(
-        optimizer=optimizer,
-        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+        optimizer='adam',
+        loss='binary_crossentropy',
         metrics=["accuracy"]
     )
     with open(os.devnull, "w") as f, contextlib.redirect_stdout(f):
         trainingDataset, validationDataset = create_datasets(dir)
+    train_batch= generator('datasets/eyes/train',shuffle=True, batch_size=32,target_size=(24,24))
+    valid_batch= generator('datasets/eyes/test',shuffle=True, batch_size=32,target_size=(24,24))
+
     model.fit(
-        trainingDataset,
-        validation_data=validationDataset,
+        train_batch,
+        validation_data=valid_batch,
         epochs=epochs,
         callbacks=[Callback()],
         shuffle = True
@@ -90,7 +99,7 @@ def create_model(dir: str, accuracy: int = 0.95, activation: str = "relu", optim
 
 def test_model(model: tf.keras.models.Sequential, dir: str, result: int) -> float:
     count: int = 0
-    errors: int = 1
+    errors: int = 0
     for file in os.listdir(dir):
         count += 1
         img = cv.imread(f"{dir}/{file}", cv.IMREAD_GRAYSCALE)
@@ -99,4 +108,4 @@ def test_model(model: tf.keras.models.Sequential, dir: str, result: int) -> floa
         img: np.ndarray = np.expand_dims(img,axis=0)
         pred = model.predict(img)[0]
         print(pred)
-    return count / errors
+    return errors, count
