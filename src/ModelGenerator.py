@@ -73,7 +73,7 @@ def create_model(dir: str, accuracy: int = 0.95, activation: str = "relu", optim
         tf.keras.layers.Dense(units=128, activation="relu"),
         tf.keras.layers.Dropout(rate=0.5),
         # Usamos la activación sigmoid porque es la más correcta para salidas binarias.
-        tf.keras.layers.Dense(units=2, activation="softmax")
+        tf.keras.layers.Dense(units=2, activation="sigmoid")
     ])
     model.compile(
         optimizer='adam',
@@ -97,7 +97,7 @@ def create_model(dir: str, accuracy: int = 0.95, activation: str = "relu", optim
     return model
 
 
-def test_model(model: tf.keras.models.Sequential, dir: str, result: int) -> float:
+def test_model(model: tf.keras.models.Sequential, dir: str, result: str) -> float:
     count: int = 0
     errors: int = 0
     for file in os.listdir(dir):
@@ -106,6 +106,9 @@ def test_model(model: tf.keras.models.Sequential, dir: str, result: int) -> floa
         img: np.ndarray = cv.resize(img, (IMAGE_SIZE, IMAGE_SIZE))
         img: np.ndarray = img.reshape(IMAGE_SIZE, IMAGE_SIZE, -1)
         img: np.ndarray = np.expand_dims(img,axis=0)
-        pred = model.predict(img)[0]
-        print(pred)
+        pred = model.predict(img, verbose=0)[0]
+        if result == "open" and pred[0] != 1:
+            errors += 1
+        elif result == "closed"and pred[1] != 1:
+            errors += 1
     return errors, count
