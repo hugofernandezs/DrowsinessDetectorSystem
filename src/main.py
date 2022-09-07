@@ -9,7 +9,6 @@ import ModelGenerator as mg
 
 # Function to stop the system.
 def exit_sys():
-    cap.release() 
     st.stop()
 
 pg.mixer.init()
@@ -80,14 +79,16 @@ def main() -> None:
     frameCount: int = 0
     framesSleep: int = 0
     framesAwake: int = 0
+        
+    cap: cv.VideoCapture = cv.VideoCapture("http://localhost:8080")
+
     # Keeps reading while the cap is opened.
-    while(True):
+    while(cap.IsOpened()):
+        print("Acces correct")
         label: str = ""
         eyesTag: str = ""
         yawnTag: str = ""
         warningHolder.text("")
-        
-        cap: cv.VideoCapture = cv.VideoCapture("http://localhost:8080")
 
         ret, frame = cap.read()
 
