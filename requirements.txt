@@ -5,3 +5,4 @@ tensorflow
 opencv-python
 scipy
 pygame
+ffmpeg
