@@ -1,5 +1,7 @@
+import os
 import cv2 as cv
 import numpy as np
+import pygame as pg
 import streamlit as st
 import tensorflow as tf
 import ModelGenerator as mg
@@ -10,18 +12,23 @@ def exit_sys():
     cap.release() 
     st.stop()
 
+pg.mixer.init()
+sound = pg.mixer.Sound('alarm.wav')
+
 # Algunas constantes del programa
 frameCount: int = 0
-# warningScore: int = 10
+warningScore: int = 10
 
-# maxScore: int = 100
-# scoreIncrease: int = 1
+maxScore: int = 100
+scoreIncrease: int = 1
+scoreDecrease: int = 1
 
-# maxThicc: int = 10
-# thiccIncrease: int = 2
+maxThicc: int = 10
+thiccIncrease: int = 2
+thiccDecrease: int = 2
 
 # Opens thw webcam for capturing images.
-cap: cv.VideoCapture = cv.VideoCapture(0)
+cap: cv.VideoCapture = cv.VideoCapture(0 + cv.CAP_DSHOW)
 
 # Loads the OpenCV cascade files for face and eye detections.
 faceCascade = cv.CascadeClassifier(f"{cv.data.haarcascades}haarcascade_frontalface_alt2.xml")
@@ -34,24 +41,34 @@ col1, col2 = st.columns([2, 2])
 imagePlaceHolder = col1.empty()
 exitButton: st.button = st.button(label="Exit", on_click=exit_sys)
 st.sidebar.title("User Inputs")
-
 eyesTagText = col2.empty()
 faceTagText = col2.empty()
 labelText = col2.empty()
-frameCountText = col2.empty()
+frameCountText = col1.empty()
+spaceText = col2.empty()
+warningScoreText = col2.empty()
+maxScoreText = col2.empty()
+scoreIncreaseText = col2.empty()
+scoreDecreaseText = col2.empty()
+maxThiccText = col2.empty()
+thiccIncreaseText = col2.empty()
+thiccDecreaseText = col2.empty()
+
+framesSleepText = col1.empty()
+framesAwakeText = col1.empty()
 
 warningHolder = st.empty()
 
 # Algunas constantes del programa
-warningScore = st.sidebar.slider("Warning score:", min_value=0, max_value=100, value=10)
+warningScoreSlider = st.sidebar.slider("Warning score:", min_value=0, max_value=100, value=10)
 
-maxScore = st.sidebar.slider("Max score", min_value=0, max_value=100, value=100)
-scoreIncrease = st.sidebar.slider("Score increase", min_value=0, max_value=10, value=1)
-scoreDecrease = st.sidebar.slider("Score decrease", min_value=0, max_value=10, value=1)
+maxScoreSlider = st.sidebar.slider("Max score", min_value=0, max_value=100, value=100)
+scoreIncreaseSlider = st.sidebar.slider("Score increase", min_value=0, max_value=10, value=1)
+scoreDecreaseSlider = st.sidebar.slider("Score decrease", min_value=0, max_value=10, value=1)
 
-maxThicc = st.sidebar.slider("Max thiccness", min_value=0, max_value=100, value=10)
-thiccIncrease = st.sidebar.slider("Thiccness increase", min_value=0, max_value=10, value=2)
-thiccDecrease = st.sidebar.slider("Thiccness decrease", min_value=0, max_value=10, value=2)
+maxThiccSlider = st.sidebar.slider("Max thiccness", min_value=0, max_value=100, value=10)
+thiccIncreaseSlider = st.sidebar.slider("Thiccness increase", min_value=0, max_value=10, value=2)
+thiccDecreaseSlider = st.sidebar.slider("Thiccness decrease", min_value=0, max_value=10, value=2)
 
 # Initializes the enviroment and controlls the flow.
 def main() -> None:
@@ -61,6 +78,8 @@ def main() -> None:
     score: int = 0
     thicc: int = 0
     frameCount: int = 0
+    framesSleep: int = 0
+    framesAwake: int = 0
     # Keeps reading while the cap is opened.
 
     print("\nStarting detection...\n")
@@ -70,6 +89,16 @@ def main() -> None:
         yawnTag: str = ""
 
         ret, frame = cap.read()
+
+        warningScore: int = warningScoreSlider
+
+        maxScore: int = maxScoreSlider
+        scoreIncrease: int = scoreIncreaseSlider
+        scoreDecrease: int =scoreDecreaseSlider
+
+        maxThicc: int = maxThiccSlider
+        thiccIncrease: int = thiccIncreaseSlider
+        thiccDecrease: int = thiccDecreaseSlider
 
         if ret is True:
             frameCount += 1
@@ -132,17 +161,36 @@ def main() -> None:
                     
                     # Analizamos el conjunto.
                     if yawnTag == "No" and eyesTag == "Open":
-                        if score > 0:
-                            score -= scoreDecrease
-                        if thicc > 0:
-                            thicc -= thiccDecrease
+                        score -= scoreDecrease
+                        thicc -= thiccDecrease
+                        if score < 0:
+                            score = 0
+                        if thicc < 0:
+                            thicc = 0
                         label: str = "Awake"
+                        framesAwake += 1
                     else:
-                        if score < maxScore:
-                            score += scoreIncrease
-                        if score > warningScore and thicc < maxThicc:
+                        score += scoreIncrease
+                        if score > warningScore:
                             thicc += thiccIncrease
+                        if score > maxScore:
+                            score = maxScore
+                        if thicc > maxThicc:
+                            thicc = maxThicc
                         label: str = "Sleep"
+                        framesSleep += 1
+                        
+                    sound.set_volume(thicc/maxThicc)
+                    if label == "Sleep" and score > warningScore:
+                        try:
+                            sound.play()
+                        except: # isplaying = False
+                            pass
+                    if score < warningScore:
+                        try:
+                            sound.stop()
+                        except: # isplaying = False
+                            pass
 
                     # Mostramos los resultados.
                     cv.putText(frame, label, (10, frame.shape[0] - 20), cv.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255),
@@ -152,15 +200,26 @@ def main() -> None:
                             (255, 255, 255), 1, cv.LINE_AA)
                     imagePlaceHolder.image(cv.cvtColor(frame, cv.COLOR_BGR2RGB), caption='Video')
                 
-                except:
+                except Exception as exc:
+                    print(exc)
                     warningHolder.warning("Please, try better ilumination!")
 
                 eyesTagText.text(f"Eyes prediction: {eyesTag}")
                 faceTagText.text(f"Yawn prediction: {yawnTag}")
                 labelText.text(f"Drowsiness prediction: {label}")
                 frameCountText.text(f"Frames predicted: {frameCount}")
+                spaceText.text(f"")
+                warningScoreText.text(f"Warning score: {warningScore}")
+                maxScoreText.text(f"Max score: {maxScore}")
+                scoreIncreaseText.text(f"Score increase: {scoreIncrease}")
+                scoreDecreaseText.text(f"Score decrease: {scoreDecrease}")
+                maxThiccText.text(f"Max thiccness: {maxThicc}")
+                thiccIncreaseText.text(f"Thiccness increase: {thiccIncrease}")
+                thiccDecreaseText.text(f"Thiccness decrease: {thiccDecrease}")
+                framesSleepText.text(f"Frames sleep: {framesSleep}")
+                framesAwakeText.text(f"Frames awake: {framesAwake}")
         
-        if cv.waitKey(500) == ord('q'):
+        if cv.waitKey(10) == ord('q'):
             cap.release()
             cv.destroyAllWindows()
 

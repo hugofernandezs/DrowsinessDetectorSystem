@@ -4,4 +4,4 @@ streamlit
 tensorflow
 opencv-python
 scipy
-streamlit
+pygame
