@@ -28,7 +28,7 @@ thiccIncrease: int = 2
 thiccDecrease: int = 2
 
 # Opens thw webcam for capturing images.
-cap: cv.VideoCapture = cv.VideoCapture(0 + cv.CAP_DSHOW)
+
 
 # Loads the OpenCV cascade files for face and eye detections.
 faceCascade = cv.CascadeClassifier(f"{cv.data.haarcascades}haarcascade_frontalface_alt2.xml")
@@ -81,12 +81,13 @@ def main() -> None:
     framesSleep: int = 0
     framesAwake: int = 0
     # Keeps reading while the cap is opened.
-
-    print("\nStarting detection...\n")
-    while(cap.isOpened()):
+    while(True):
         label: str = ""
         eyesTag: str = ""
         yawnTag: str = ""
+        warningHolder.text("")
+        
+        cap: cv.VideoCapture = cv.VideoCapture("http://localhost:8080")
 
         ret, frame = cap.read()
 
@@ -201,8 +202,7 @@ def main() -> None:
                     imagePlaceHolder.image(cv.cvtColor(frame, cv.COLOR_BGR2RGB), caption='Video')
                 
                 except Exception as exc:
-                    print(exc)
-                    warningHolder.warning("Please, try better ilumination!")
+                    pass
 
                 eyesTagText.text(f"Eyes prediction: {eyesTag}")
                 faceTagText.text(f"Yawn prediction: {yawnTag}")
@@ -219,7 +219,7 @@ def main() -> None:
                 framesSleepText.text(f"Frames sleep: {framesSleep}")
                 framesAwakeText.text(f"Frames awake: {framesAwake}")
         
-        if cv.waitKey(10) == ord('q'):
+        if cv.waitKey(1) == ord('q'):
             cap.release()
             cv.destroyAllWindows()
 

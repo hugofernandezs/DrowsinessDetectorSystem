@@ -28,7 +28,6 @@ def create_model(dir: str) -> tf.keras.models.Sequential:
     modelName: str = str(f"{dir.split('/')[-1]}CNN.h5")
     # If the model exists, it loads it and returns it.
     if os.path.exists(f"models/{modelName}"):
-        print(f"{modelName} -> Loaded")
         return tf.keras.models.load_model(f"models/{modelName}")
     # If the model doesn't exists, it generates it.
     # Keras callback for setting an accuracy to the model fit proces.
@@ -52,7 +51,7 @@ def create_model(dir: str) -> tf.keras.models.Sequential:
         tf.keras.layers.Flatten(),
         tf.keras.layers.Dense(units=128, activation="relu"),
         tf.keras.layers.Dropout(rate=0.2),
-        tf.keras.layers.Dense(units=2, activation="softmax")
+        tf.keras.layers.Dense(units=2, activation="sigmoid")
     ])
     model.compile(
         optimizer='adam',
@@ -71,7 +70,6 @@ def create_model(dir: str) -> tf.keras.models.Sequential:
         shuffle = True
     )
     
-    print(f"{modelName} -> Created")
     model.save(f"models/{modelName}")
     return model
 
