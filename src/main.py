@@ -79,12 +79,10 @@ def main() -> None:
     frameCount: int = 0
     framesSleep: int = 0
     framesAwake: int = 0
-        
-    cap: cv.VideoCapture = cv.VideoCapture("http://localhost:8080")
 
     # Keeps reading while the cap is opened.
-    while(cap.IsOpened()):
-        print("Acces correct")
+    while(True):
+        cap: cv.VideoCapture = cv.VideoCapture("http://localhost:8080")
         label: str = ""
         eyesTag: str = ""
         yawnTag: str = ""
