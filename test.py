@@ -1,7 +1,7 @@
 import cv2 as cv
 
 while(True):
-  cap = cv.VideoCapture("http://localhost:8080")
+  cap = cv.VideoCapture(0)
   ret, frame = cap.read()
 
   if ret:

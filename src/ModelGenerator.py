@@ -1,13 +1,12 @@
 import os
 import cv2 as cv
-import contextlib
 import numpy as np
 import tensorflow as tf
 
 # Some constants.
 TARGET_SIZE: tuple[int, int] = (24, 24)
 COLOR_MODE: str = "grayscale"
-ACCURACY: float = 0.95
+ACCURACY: float = 0.99
 IMAGE_SIZE: int = 24
 BATCH_SIZE: int = 32
 EPOCHS: int = 99999
@@ -36,7 +35,7 @@ def create_model(dir: str) -> tf.keras.models.Sequential:
             super(Callback, self).__init__()
 
         def on_epoch_end(self, epoch, logs=None):
-            if logs["val_accuracy"] >= ACCURACY and logs["accuracy"] >= ACCURACY:
+            if logs["val_accuracy"] >= 0.96 and logs["accuracy"] >= ACCURACY:
                 self.model.stop_training = True
     # Creates the model.
     model: tf.keras.models.Sequential = tf.keras.models.Sequential([
