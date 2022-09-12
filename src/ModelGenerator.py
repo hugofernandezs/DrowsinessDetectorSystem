@@ -23,11 +23,13 @@ def generator(dir, shuffle=True, batch_size=1, target_size=TARGET_SIZE,
 
 
 # Creates and fits a convolutional neural network.
-def create_model(dir: str) -> tf.keras.models.Sequential:
+def create_model(dir: str, exists: str = "") -> tf.keras.models.Sequential:
     modelName: str = str(f"{dir.split('/')[-1]}CNN.h5")
     # If the model exists, it loads it and returns it.
     if os.path.exists(f"models/{modelName}"):
         return tf.keras.models.load_model(f"models/{modelName}")
+    if os.path.exists(f"{exists}"):
+        return tf.keras.models.load_model(f"{exists}")
     # If the model doesn't exists, it generates it.
     # Keras callback for setting an accuracy to the model fit proces.
     class Callback(tf.keras.callbacks.Callback):

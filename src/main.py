@@ -80,12 +80,23 @@ thiccDecreaseSlider = st.sidebar.slider("Thiccness decrease",
                                         min_value=0, max_value=10, value=2)
 frameDelaySlider = st.sidebar.slider("Frame delay", min_value=1,
                                      max_value=500, value=10)
+col12, _, col22 = st.columns([10, 2, 10])
+eyesFilename = col12.selectbox("Select eyes model", options=os.listdir("models\eyes_models"), index=0) 
+mouthFilename = col22.selectbox("Select yawn model", options=os.listdir("models\mouth_models"), index=0)
+eyesFile = col12.file_uploader("Upload an eyes model", type=['h5'])
+mouthFile = col22.file_uploader("Upload a mouth model", type=['h5'])
+if eyesFile is not None:
+    with open(os.path.join("models\eyes_models",eyesFile.name),"wb") as f: 
+        f.write(eyesFile.getbuffer()) 
+if mouthFile is not None:
+    with open(os.path.join("models\mouth_models",mouthFile.name),"wb") as f: 
+        f.write(mouthFile.getbuffer()) 
 
 # Initializes the enviroment and controlls the flow.
 def main() -> None:
     # Trains or loads the model.
-    eyesModel: tf.keras.models.Sequential = mg.create_model("datasets/eyes")
-    mouthModel: tf.keras.models.Sequential = mg.create_model("datasets/yawn")
+    eyesModel: tf.keras.models.Sequential = mg.create_model("datasets/eyes", exists=f"models\eyes_models\{eyesFilename}")
+    mouthModel: tf.keras.models.Sequential = mg.create_model("datasets/yawn", exists=f"models\mouth_models\{mouthFilename}")
 
     # Some more variables.
     score: int = 0
